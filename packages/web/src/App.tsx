@@ -70,6 +70,7 @@ function App() {
     null
   );
   const isInitialMount = useRef(true);
+  const serialBufferRef = useRef<string>('');
 
   useEffect(() => {
     if (shouldReset) {
@@ -158,11 +159,16 @@ function App() {
             if (done) break;
 
             const text = new TextDecoder().decode(value);
-            const lines = text.split('\n').filter((line) => line.trim());
+            const fullText = serialBufferRef.current + text;
+            const lines = fullText.split('\n');
+
+            serialBufferRef.current = lines.pop() || '';
+
+            const completeLines = lines.filter((line) => line.trim());
 
             setSerialData((prev) => {
-              const newData = [...prev, ...lines];
-              return newData.slice(-1000);
+              const newData = [...prev, ...completeLines];
+              return newData.slice(-100);
             });
           }
         } catch (err) {
@@ -202,6 +208,7 @@ function App() {
       }
       setIsSerialConnected(false);
       setSerialData([]);
+      serialBufferRef.current = '';
     } catch (err) {
       console.error('Error disconnecting serial port:', err);
     }
