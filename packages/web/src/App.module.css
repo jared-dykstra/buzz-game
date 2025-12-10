@@ -97,11 +97,12 @@
 }
 
 .digitalText {
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', monospace !important;
   color: #0f0;
-  text-shadow: 0 0 10px #0f0;
+  text-shadow: 0 0 0.5em #0f0;
   font-weight: bold;
   user-select: none;
+  font-size: 6.5em !important;
 }
 
 .webcamHeader {
@@ -310,4 +311,3 @@
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
   margin: 0;
 }
-

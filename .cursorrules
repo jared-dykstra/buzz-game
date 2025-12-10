@@ -12,3 +12,9 @@
 - Prefer clear code over explanatory comments
 - Remove unnecessary comments
 
+## TypeScript
+- Prefer TypeScript over JavaScript
+- Use `type` over `interface` for type definitions
+- Always use TypeScript for new files
+- Prefer string unions over enum
+

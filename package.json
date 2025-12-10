@@ -14,5 +14,8 @@
     "build": "npm run build --workspace=packages/web",
     "lint": "npm run lint --workspace=packages/web",
     "preview": "npm run preview --workspace=packages/web"
+  },
+  "devDependencies": {
+    "@types/canvas-confetti": "^1.9.0"
   }
 }
