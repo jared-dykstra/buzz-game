@@ -8,6 +8,7 @@ function App() {
   const searchParams = new URLSearchParams(window.location.search)
   const showButtons = searchParams.get('buttons') === '1'
   const showConsole = searchParams.get('console') === '1'
+  const shouldReset = searchParams.get('reset') === '1'
 
   const [webcamError, setWebcamError] = useState(null)
   const [serialError, setSerialError] = useState(null)
@@ -20,6 +21,10 @@ function App() {
   const [isPulsing, setIsPulsing] = useState(false)
   const [selectedSession, setSelectedSession] = useState(null)
   const [finishedSessions, setFinishedSessions] = useState(() => {
+    if (shouldReset) {
+      localStorage.removeItem('buzz-game-sessions')
+      return []
+    }
     const stored = localStorage.getItem('buzz-game-sessions')
     if (stored) {
       try {
@@ -37,6 +42,18 @@ function App() {
   const portRef = useRef(null)
   const readerRef = useRef(null)
   const isInitialMount = useRef(true)
+
+  useEffect(() => {
+    if (shouldReset) {
+      const newSearchParams = new URLSearchParams(window.location.search)
+      newSearchParams.delete('reset')
+      const newSearch = newSearchParams.toString()
+      const newUrl = newSearch
+        ? `${window.location.pathname}?${newSearch}`
+        : window.location.pathname
+      window.history.replaceState({}, '', newUrl)
+    }
+  }, [])
 
   useEffect(() => {
     if (isInitialMount.current) {
