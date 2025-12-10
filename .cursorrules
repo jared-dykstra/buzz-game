@@ -1,0 +1,14 @@
+# Cursor Rules
+
+## Documentation
+- Prefer minimal documentation
+- Only add documentation when it adds significant value
+- Avoid verbose comments and docstrings
+- Code should be self-explanatory
+
+## Comments
+- Use minimal comments
+- Only comment when the code's intent is not immediately clear
+- Prefer clear code over explanatory comments
+- Remove unnecessary comments
+
