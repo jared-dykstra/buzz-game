@@ -166,6 +166,19 @@ function App() {
 
             const completeLines = lines.filter((line) => line.trim());
 
+            completeLines.forEach((line) => {
+              if (line.startsWith('CMD: ')) {
+                const command = line.substring(5).trim();
+                if (command === 'Reset') {
+                  handleStartReset();
+                } else if (command === 'Hit') {
+                  handleHit();
+                } else if (command === 'Finished') {
+                  handleFinished();
+                }
+              }
+            });
+
             setSerialData((prev) => {
               const newData = [...prev, ...completeLines];
               return newData.slice(-100);
