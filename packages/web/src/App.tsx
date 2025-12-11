@@ -369,7 +369,7 @@ function App() {
       saveSession(imageData);
     }
 
-    const duration = 3000;
+    const duration = 5_000;
     const animationEnd = Date.now() + duration;
     const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
 
@@ -388,6 +388,8 @@ function App() {
 
       confetti({
         ...defaults,
+        shapes: ['square', 'square', 'star', 'circle'],
+        scalar: 4,
         particleCount,
         origin: { x: randomInRange(0.1, 0.9), y: Math.random() - 0.2 },
       });
