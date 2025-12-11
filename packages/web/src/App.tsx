@@ -14,8 +14,18 @@ import {
   Modal,
   Backdrop,
   Fade,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  IconButton,
 } from '@mui/material';
-import { Videocam, VideocamOff, Usb, UsbOff } from '@mui/icons-material';
+import {
+  Videocam,
+  VideocamOff,
+  Usb,
+  UsbOff,
+  ExpandMore,
+} from '@mui/icons-material';
 import confetti from 'canvas-confetti';
 import styles from './App.module.css';
 import type { SerialPort } from './types.d.ts';
@@ -30,7 +40,7 @@ type FinishedSession = {
 function App() {
   const searchParams = new URLSearchParams(window.location.search);
   const showButtons = searchParams.get('buttons') === '1';
-  const showConsole = searchParams.get('console') === '1';
+  const [showConsole, setShowConsole] = useState(false);
   const shouldReset = searchParams.get('reset') === '1';
 
   const [webcamError, setWebcamError] = useState<string | null>(null);
@@ -39,7 +49,7 @@ function App() {
   const [isWebcamActive, setIsWebcamActive] = useState(false);
   const [isSerialConnected, setIsSerialConnected] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const isTimerRunning = useRef(true);
   const [counter, setCounter] = useState(0);
   const [isPulsing, setIsPulsing] = useState(false);
   const [selectedSession, setSelectedSession] =
@@ -71,6 +81,9 @@ function App() {
   );
   const isInitialMount = useRef(true);
   const serialBufferRef = useRef<string>('');
+  const timerSecondsRef = useRef(0);
+  const counterRef = useRef(0);
+  const serialOutputRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (shouldReset) {
@@ -94,6 +107,14 @@ function App() {
       JSON.stringify(finishedSessions)
     );
   }, [finishedSessions]);
+
+  useEffect(() => {
+    timerSecondsRef.current = timerSeconds;
+  }, [timerSeconds]);
+
+  useEffect(() => {
+    counterRef.current = counter;
+  }, [counter]);
 
   useEffect(() => {
     const startWebcam = async () => {
@@ -133,7 +154,7 @@ function App() {
     };
   }, []);
 
-  const connectSerialPort = async () => {
+  const connectSerialPort = async (existingPort?: SerialPort) => {
     try {
       if (!navigator.serial) {
         setSerialError(
@@ -142,7 +163,7 @@ function App() {
         return;
       }
 
-      const port = await navigator.serial!.requestPort();
+      const port = existingPort ?? (await navigator.serial!.requestPort());
       await port.open({ baudRate: 9600 });
       portRef.current = port;
       setIsSerialConnected(true);
@@ -169,12 +190,23 @@ function App() {
             completeLines.forEach((line) => {
               if (line.startsWith('CMD: ')) {
                 const command = line.substring(5).trim();
-                if (command === 'Reset') {
+                if (command.startsWith('Reset')) {
                   handleStartReset();
-                } else if (command === 'Hit') {
+                } else if (command.startsWith('Hit')) {
                   handleHit();
-                } else if (command === 'Finished') {
+                } else if (command.startsWith('Finished')) {
                   handleFinished();
+                }
+              } else if (line.startsWith('RENDER: ')) {
+                const [stateKey, stateValue] = line.substring(8).trim().split('=') ?? ['', undefined];
+                const value = stateValue != null ? Number.parseInt(stateValue) : undefined;
+                if (value != null) {
+                  if (stateKey.startsWith('hitCount')) {
+                    setCounter(value);
+                  } else if (stateKey.startsWith('s')) {
+                    setTimerSeconds(value)
+                  }
+
                 }
               }
             });
@@ -234,39 +266,67 @@ function App() {
   }, []);
 
   useEffect(() => {
+    const tryReconnect = async () => {
+      if (!navigator.serial?.getPorts) return;
+      try {
+        const ports = await navigator.serial.getPorts();
+        if (ports.length > 0) {
+          await connectSerialPort(ports[0]);
+        }
+      } catch (err) {
+        console.error('Error reconnecting to serial port:', err);
+      }
+    };
+
+    void tryReconnect();
+  }, []);
+
+  useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
-    if (isTimerRunning) {
-      interval = setInterval(() => {
-        setTimerSeconds((prev) => prev + 1);
-      }, 1000);
+    if (isTimerRunning.current) {
+      // interval = setInterval(() => {
+      //   setTimerSeconds((prev) => prev + 1);
+      // }, 1000);
     }
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isTimerRunning]);
+  }, []);
+
+  useEffect(() => {
+    if (serialOutputRef.current) {
+      serialOutputRef.current.scrollTop = serialOutputRef.current.scrollHeight;
+    }
+  }, [serialData]);
 
   const handleStartReset = () => {
-    if (isTimerRunning) {
-      setIsTimerRunning(false);
-      setTimerSeconds(0);
-      setCounter(0);
-    } else {
-      setIsTimerRunning(true);
-    }
+    isTimerRunning.current = true;
   };
 
   const handleHit = () => {
-    setCounter((prev) => prev + 1);
+    // setCounter((prev) => prev + 1);
     setIsPulsing(true);
     setTimeout(() => setIsPulsing(false), 450);
   };
 
   const captureWebcamImage = (): string | null => {
-    if (!videoRef.current || !isWebcamActive) {
+    if (!videoRef.current) {
+
       return null;
     }
 
     const video = videoRef.current;
+    const hasVideoData =
+      video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0;
+
+    if (!hasVideoData) {
+      return null;
+    }
+
+    if (!isWebcamActive) {
+      setIsWebcamActive(true);
+    }
+
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -277,18 +337,37 @@ function App() {
   };
 
   const handleFinished = () => {
-    setIsTimerRunning(false);
+
+    if (!isTimerRunning.current) {
+      return;
+    }
+
+    isTimerRunning.current = false;
 
     const now = new Date();
     const dateTime = now.toLocaleString();
-    const imageData = captureWebcamImage();
-    const session: FinishedSession = {
-      dateTime,
-      timerValue: formatTime(timerSeconds),
-      hitCount: counter,
-      imageData,
+    const timerValue = formatTime(timerSecondsRef.current);
+    const hitCount = counterRef.current;
+
+    const saveSession = (imageData: string | null) => {
+      const session: FinishedSession = {
+        dateTime,
+        timerValue,
+        hitCount,
+        imageData,
+      };
+      setFinishedSessions((prev) => [session, ...prev]);
     };
-    setFinishedSessions((prev) => [session, ...prev]);
+
+    let imageData = captureWebcamImage();
+    if (!imageData) {
+      setTimeout(() => {
+        imageData = captureWebcamImage();
+        saveSession(imageData);
+      }, 100);
+    } else {
+      saveSession(imageData);
+    }
 
     const duration = 3000;
     const animationEnd = Date.now() + duration;
@@ -322,7 +401,7 @@ function App() {
   };
 
   const formatCounter = (count: number): string => {
-    return String(count).padStart(4, '0');
+    return String(count).padStart(3, '0');
   };
 
   return (
@@ -361,6 +440,7 @@ function App() {
                 autoPlay
                 playsInline
                 muted
+                onLoadedMetadata={() => setIsWebcamActive(true)}
                 className={styles.video}
               />
             </Box>
@@ -438,106 +518,125 @@ function App() {
         </Paper>
       </Box>
 
-      {showConsole && (
-        <Box className={styles.serialSection}>
-          <Paper className={styles.serialPaper} elevation={3}>
-            <Box className={styles.serialHeader}>
+
+      <Box className={styles.serialSection}>
+        <Paper elevation={3} className={styles.serialPaper}>
+          <Accordion expanded={showConsole} onChange={(_, expanded) => setShowConsole(expanded)} className={styles.serialAccordion}>
+            <AccordionSummary expandIcon={
+              <IconButton size="small" className={styles.expandIconButton}>
+                <ExpandMore />
+              </IconButton>
+            }>
               <Box className={styles.headerContent}>
-                {isSerialConnected ? (
-                  <Usb color="success" />
+                {!isSerialConnected ? (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<Usb />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      connectSerialPort();
+                    }}
+                  >
+                    Connect Serial Port
+                  </Button>
                 ) : (
-                  <UsbOff color="action" />
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<UsbOff />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      disconnectSerialPort();
+                    }}
+                  >
+                    Disconnect
+                  </Button>
                 )}
-                <Typography variant="h6" component="h2">
-                  Serial Port Output
-                </Typography>
-              </Box>
-              {!isSerialConnected ? (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<Usb />}
-                  onClick={connectSerialPort}
-                >
-                  Connect Serial Port
-                </Button>
-              ) : (
-                <Button
-                  variant="outlined"
-                  color="error"
-                  startIcon={<UsbOff />}
-                  onClick={disconnectSerialPort}
-                >
-                  Disconnect
-                </Button>
-              )}
-            </Box>
-            {serialError && (
-              <Box className={styles.errorContainer}>
-                <Alert severity="error" onClose={() => setSerialError(null)}>
-                  {serialError}
-                </Alert>
-              </Box>
-            )}
-            <Box className={styles.serialOutput}>
-              {serialData.length === 0 ? (
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  className={styles.emptyState}
-                >
-                  {isSerialConnected
-                    ? 'Waiting for data from serial port...'
-                    : 'Click "Connect Serial Port" to begin receiving data'}
-                </Typography>
-              ) : (
-                <Box className={styles.dataContainer}>
-                  {serialData.map((line, index) => (
-                    <Typography
-                      key={index}
-                      variant="body2"
-                      component="div"
-                      className={styles.dataLine}
+                {serialError && (
+                  <Box className={styles.errorContainer} onClick={(e) => e.stopPropagation()}>
+                    <Alert severity="error" onClose={() => setSerialError(null)}>
+                      {serialError}
+                    </Alert>
+                  </Box>
+                )}
+                {showButtons && (
+                  <Box className={styles.buttonRow}>
+                    <Button
+                      variant="contained"
+                      color={isTimerRunning.current ? 'error' : 'primary'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStartReset();
+                      }}
+                      className={styles.controlButton}
                     >
-                      {line}
+                      {isTimerRunning.current ? 'Reset' : 'Start'}
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleHit();
+                      }}
+                      disabled={!isTimerRunning.current}
+                      className={styles.controlButton}
+                    >
+                      Hit
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="success"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleFinished();
+                      }}
+                      disabled={!isTimerRunning.current}
+                      className={styles.controlButton}
+                    >
+                      Finished
+                    </Button>
+                  </Box>
+                )}
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails className={styles.serialAccordionDetails}>
+              <Paper className={styles.serialPaper} elevation={0}>
+                <Box ref={serialOutputRef} className={styles.serialOutput}>
+                  {serialData.length === 0 ? (
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      className={styles.emptyState}
+                    >
+                      {isSerialConnected
+                        ? 'Waiting for data from serial port...'
+                        : 'Click "Connect Serial Port" to begin receiving data'}
                     </Typography>
-                  ))}
+                  ) : (
+                    <Box className={styles.dataContainer}>
+                      {serialData.map((line, index) => (
+                        <Typography
+                          key={index}
+                          variant="body2"
+                          component="div"
+                          className={styles.dataLine}
+                        >
+                          {line}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
                 </Box>
-              )}
-            </Box>
-          </Paper>
-        </Box>
-      )}
-      {showButtons && (
-        <Box className={styles.buttonRow}>
-          <Button
-            variant="contained"
-            color={isTimerRunning ? 'error' : 'primary'}
-            onClick={handleStartReset}
-            className={styles.controlButton}
-          >
-            {isTimerRunning ? 'Reset' : 'Start'}
-          </Button>
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={handleHit}
-            disabled={!isTimerRunning}
-            className={styles.controlButton}
-          >
-            Hit
-          </Button>
-          <Button
-            variant="contained"
-            color="success"
-            onClick={handleFinished}
-            disabled={!isTimerRunning}
-            className={styles.controlButton}
-          >
-            Finished
-          </Button>
-        </Box>
-      )}
+              </Paper>
+            </AccordionDetails>
+          </Accordion>
+        </Paper>
+      </Box>
+
+
+
       <Modal
         open={!!selectedSession}
         onClose={() => setSelectedSession(null)}

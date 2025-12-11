@@ -212,8 +212,9 @@ Debounce wandBtn(onWand, initialLedState);
 const int onWand(int newValue) {
   // Serial.print("onWand");
   if (newValue == HIGH && !isFinished) {
-    Serial.println("CMD: Hit");
     wandCount++;
+    Serial.print("CMD: Hit, ");
+    Serial.println(wandCount);
     throttleStartTime = millis();
   }
   return !newValue;
@@ -252,8 +253,9 @@ const checkButton() {
 
   // If held down, auto-increment the wand counter
   if (!isFinished && ledState != initialLedState && (ms - throttleStartTime > autoIncrementMs)) {
-    Serial.println("CMD: Hit");
     wandCount++;
+    Serial.print("CMD: Hit, ");
+    Serial.println(wandCount);
     throttleStartTime = ms;
   }
 

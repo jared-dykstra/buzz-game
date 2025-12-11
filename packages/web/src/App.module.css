@@ -1,3 +1,15 @@
+.fontE1234 {
+  font-family: 'E1234', 'Courier New', monospace !important;
+}
+
+@font-face {
+  font-family: 'E1234';
+  src: url('/fonts/E1234.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 .container {
   display: flex;
   flex-direction: column;
@@ -16,9 +28,11 @@
   0% {
     background-color: transparent;
   }
+
   50% {
     background-color: #d32f2f;
   }
+
   100% {
     background-color: transparent;
   }
@@ -51,9 +65,11 @@
   0% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.1);
   }
+
   100% {
     transform: scale(1);
   }
@@ -68,10 +84,12 @@
     color: #0f0;
     text-shadow: 0 0 10px #0f0;
   }
+
   50% {
     color: #d32f2f;
     text-shadow: 0 0 10px #d32f2f;
   }
+
   100% {
     color: #0f0;
     text-shadow: 0 0 10px #0f0;
@@ -97,12 +115,12 @@
 }
 
 .digitalText {
-  font-family: 'Courier New', monospace !important;
+  font-family: 'E1234', 'Courier New', monospace !important;
   color: #0f0;
   text-shadow: 0 0 0.5em #0f0;
   font-weight: bold;
   user-select: none;
-  font-size: 6.5em !important;
+  font-size: 4.5em !important;
 }
 
 .webcamHeader {
@@ -117,6 +135,8 @@
 .headerContent {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
   gap: 8px;
 }
 
@@ -142,13 +162,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
 }
 
 .tableSection {
-  flex: 0 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   padding: 8px 16px;
-  max-height: 200px;
 }
 
 .tablePaper {
@@ -165,11 +186,33 @@
 }
 
 .serialSection {
-  flex: 1;
+  flex: 0 0 auto;
   display: flex;
-  min-height: 0;
   padding: 16px;
   padding-top: 8px;
+}
+
+.serialAccordion {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.serialAccordionDetails {
+  padding: 0 !important;
+  width: 100%;
+  height: 10rem;
+  overflow-y: scroll;
+}
+
+.expandIconButton {
+  border-radius: 50% !important;
+  background-color: rgba(0, 0, 0, 0.04) !important;
+  margin-left: 8px !important;
+}
+
+.expandIconButton:hover {
+  background-color: rgba(0, 0, 0, 0.08) !important;
 }
 
 .serialPaper {
@@ -239,9 +282,7 @@
 .buttonRow {
   display: flex;
   gap: 16px;
-  padding: 16px;
-  padding-top: 8px;
-  justify-content: center;
+  justify-content: flex-end;
   flex-shrink: 0;
 }
 
