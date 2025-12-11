@@ -13,7 +13,7 @@
     "dev": "npm run dev --workspace=packages/web",
     "build": "npm run build --workspace=packages/web",
     "lint": "npm run lint --workspace=packages/web",
-    "preview": "npm run preview --workspace=packages/web"
+    "start": "npm run start --workspace=packages/web"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0"
