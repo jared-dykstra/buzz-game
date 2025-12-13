@@ -1,5 +1,7 @@
 # Buzz Game
 
+DEMO: https://jared-dykstra.github.io/buzz-game/
+
 A monorepo containing the Buzz Game project.
 
 ## Structure
