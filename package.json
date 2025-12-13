@@ -12,7 +12,7 @@
   "scripts": {
     "dev": "npm run dev --workspace=packages/web",
     "build": "npm run build --workspace=packages/web",
-    "publish": "npm run build && cp -R packages/web/dist demo",
+    "publish": "npm run build && rm -rd demo && mv packages/web/dist demo",
     "lint": "npm run lint --workspace=packages/web",
     "start": "npm run start --workspace=packages/web"
   },
