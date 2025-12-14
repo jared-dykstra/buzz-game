@@ -539,8 +539,11 @@ function App() {
                       e.stopPropagation();
                       connectSerialPort();
                     }}
+                    className={styles.responsiveButton}
                   >
-                    Connect Serial Port
+                    <Typography>
+                      Connect Serial Port
+                    </Typography>
                   </Button>
                 ) : (
                   <Button
@@ -551,8 +554,11 @@ function App() {
                       e.stopPropagation();
                       disconnectSerialPort();
                     }}
+                    className={styles.responsiveButton}
                   >
-                    Disconnect
+                    <Typography>
+                      Disconnect
+                    </Typography>
                   </Button>
                 )}
                 {serialError && (
@@ -571,7 +577,7 @@ function App() {
                         e.stopPropagation();
                         handleStartReset();
                       }}
-                      className={styles.controlButton}
+                      className={`${styles.controlButton} ${styles.responsiveButton}`}
                     >
                       {isTimerRunning.current ? 'Reset' : 'Start'}
                     </Button>
@@ -583,7 +589,7 @@ function App() {
                         handleHit();
                       }}
                       disabled={!isTimerRunning.current}
-                      className={styles.controlButton}
+                      className={`${styles.controlButton} ${styles.responsiveButton}`}
                     >
                       Hit
                     </Button>
@@ -595,7 +601,7 @@ function App() {
                         handleFinished();
                       }}
                       disabled={!isTimerRunning.current}
-                      className={styles.controlButton}
+                      className={`${styles.controlButton} ${styles.responsiveButton}`}
                     >
                       Finished
                     </Button>
@@ -665,11 +671,11 @@ function App() {
                   className={styles.fullSizeImage}
                 />
                 <Box className={styles.imageOverlay}>
-                  <Typography variant="h4" className={styles.overlayText}>
+                  <Typography variant="h4" className={styles.digitalText}>
                     {selectedSession.timerValue}
                   </Typography>
                   <Typography variant="h5" className={styles.overlayText}>
-                    {selectedSession.hitCount} hits
+                    <span className={styles.digitalText}>{selectedSession.hitCount}</span> hits
                   </Typography>
                 </Box>
               </Box>

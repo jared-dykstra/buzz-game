@@ -11,11 +11,13 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background-color: #ccc;
 }
 
 #root {
   height: 100vh;
+  height: 100dvh;
   width: 100vw;
 }
